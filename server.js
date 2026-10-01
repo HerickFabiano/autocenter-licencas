@@ -22,10 +22,14 @@ function gerarChave() {
   return `AC-${seg()}-${seg()}-${seg()}`;
 }
 
+function normalizeCnpj(v) {
+  return (v || '').replace(/\D/g, '');
+}
+
 // ── Validar licença (chamado pelo AutoCenter) ─────────────────────────────────
 app.post('/api/licenca/validar', async (req, res) => {
   try {
-    const { chave, machineId } = req.body;
+    const { chave, cnpj } = req.body;
     if (!chave) return res.json({ valido: false, motivo: 'Chave não informada' });
 
     const r = await pool.query('SELECT * FROM licencas WHERE chave = $1', [chave.trim().toUpperCase()]);
@@ -39,11 +43,13 @@ app.post('/api/licenca/validar', async (req, res) => {
     if (new Date(lic.expira_em) < new Date())
       return res.json({ valido: false, motivo: 'Licença vencida', expirouEm: lic.expira_em });
 
-    // Vincula machine_id na primeira utilização
-    if (machineId && !lic.machine_id) {
-      await pool.query('UPDATE licencas SET machine_id = $1 WHERE id = $2', [machineId, lic.id]);
-    } else if (machineId && lic.machine_id && lic.machine_id !== machineId) {
-      return res.json({ valido: false, motivo: 'Licença vinculada a outra máquina' });
+    const cnpjEnviado = normalizeCnpj(cnpj);
+
+    // Vincula CNPJ na primeira utilização
+    if (cnpjEnviado && !lic.cnpj) {
+      await pool.query('UPDATE licencas SET cnpj = $1 WHERE id = $2', [cnpjEnviado, lic.id]);
+    } else if (cnpjEnviado && lic.cnpj && normalizeCnpj(lic.cnpj) !== cnpjEnviado) {
+      return res.json({ valido: false, motivo: 'Licença vinculada a outro CNPJ' });
     }
 
     await pool.query('UPDATE licencas SET ultimo_acesso = NOW() WHERE id = $1', [lic.id]);
@@ -64,15 +70,16 @@ app.post('/api/licenca/validar', async (req, res) => {
 // ── Criar licença ─────────────────────────────────────────────────────────────
 app.post('/api/licenca/criar', adminAuth, async (req, res) => {
   try {
-    const { cliente, email, dias, observacao } = req.body;
+    const { cliente, email, cnpj, dias, observacao } = req.body;
     if (!cliente || !dias) return res.status(400).json({ error: 'cliente e dias são obrigatórios' });
 
     const chave    = gerarChave();
     const expiraEm = new Date(Date.now() + Number(dias) * 86400000);
+    const cnpjNorm = normalizeCnpj(cnpj) || null;
 
     await pool.query(
-      'INSERT INTO licencas (chave, cliente, email, expira_em, observacao) VALUES ($1,$2,$3,$4,$5)',
-      [chave, cliente.trim(), email?.trim() || null, expiraEm, observacao?.trim() || null]
+      'INSERT INTO licencas (chave, cliente, email, cnpj, expira_em, observacao) VALUES ($1,$2,$3,$4,$5,$6)',
+      [chave, cliente.trim(), email?.trim() || null, cnpjNorm, expiraEm, observacao?.trim() || null]
     );
 
     res.json({ chave, expiraEm, diasRestantes: Number(dias) });
@@ -128,10 +135,10 @@ app.put('/api/licenca/reativar/:id', adminAuth, async (req, res) => {
   }
 });
 
-// ── Desvincular máquina ───────────────────────────────────────────────────────
+// ── Desvincular CNPJ ──────────────────────────────────────────────────────────
 app.put('/api/licenca/desvincular/:id', adminAuth, async (req, res) => {
   try {
-    await pool.query('UPDATE licencas SET machine_id = NULL WHERE id = $1', [req.params.id]);
+    await pool.query('UPDATE licencas SET cnpj = NULL WHERE id = $1', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: e.message });

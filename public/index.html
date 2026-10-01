@@ -131,8 +131,9 @@
         <div><label>E-mail (opcional)</label><input id="fEmail" type="email" placeholder="cliente@email.com" /></div>
         <div><label>Dias de Acesso</label><input id="fDias" type="number" value="30" min="1" /></div>
       </div>
-      <div class="form-row2">
-        <div><label>Observação (opcional)</label><textarea id="fObs" placeholder="Plano contratado, notas..."></textarea></div>
+      <div class="form-row">
+        <div><label>CNPJ (opcional — vincula na 1ª ativação se não informado)</label><input id="fCnpj" type="text" placeholder="00.000.000/0000-00" /></div>
+        <div><label>Observação (opcional)</label><input id="fObs" type="text" placeholder="Plano contratado, notas..." /></div>
         <div style="display:flex;align-items:flex-end">
           <button class="btn btn-success" onclick="criarLicenca()" style="width:100%;justify-content:center">
             ＋ Gerar Licença
@@ -174,7 +175,7 @@
               <th>Expira em</th>
               <th>Dias Rest.</th>
               <th>Último Acesso</th>
-              <th>Máquina</th>
+              <th>CNPJ</th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -292,13 +293,14 @@
       const dias = st === 'ativa' ? diasRestantes(l.expira_em) : '—';
       const diasColor = typeof dias === 'number' && dias <= 5 ? 'color:var(--red);font-weight:700' : '';
 
+      const cnpjFmt = l.cnpj ? l.cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5') : '—';
       const acoes = `
         <div class="actions">
           <button class="btn btn-ghost btn-sm" onclick="abrirRenovar(${l.id},'${l.cliente.replace(/'/g,"\\'")}')">Renovar</button>
           ${st !== 'revogada'
             ? `<button class="btn btn-danger btn-sm" onclick="revogar(${l.id})">Revogar</button>`
             : `<button class="btn btn-ghost btn-sm" onclick="reativar(${l.id})">Reativar</button>`}
-          ${l.machine_id ? `<button class="btn btn-ghost btn-sm" onclick="desvincular(${l.id})" title="Desvincular máquina">🖥 Desvinc.</button>` : ''}
+          ${l.cnpj ? `<button class="btn btn-ghost btn-sm" onclick="desvincular(${l.id})" title="Desvincular CNPJ">🔗 Desvinc.</button>` : ''}
         </div>`;
 
       return `<tr>
@@ -310,7 +312,7 @@
         <td>${fmtDate(l.expira_em)}</td>
         <td style="${diasColor}">${dias}${typeof dias === 'number' ? ' dias' : ''}</td>
         <td>${fmtDate(l.ultimo_acesso)}</td>
-        <td style="font-size:10px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis">${l.machine_id ? '✓ Vinculada' : '—'}</td>
+        <td style="font-size:11px;color:var(--muted)">${cnpjFmt}</td>
         <td>${acoes}</td>
       </tr>`;
     }).join('');
@@ -320,6 +322,7 @@
   async function criarLicenca() {
     const cliente = document.getElementById('fCliente').value.trim();
     const email   = document.getElementById('fEmail').value.trim();
+    const cnpj    = document.getElementById('fCnpj').value.trim();
     const dias    = Number(document.getElementById('fDias').value);
     const obs     = document.getElementById('fObs').value.trim();
     if (!cliente) return alert('Informe o nome do cliente.');
@@ -327,7 +330,7 @@
 
     const r = await fetch('/api/licenca/criar', {
       method: 'POST', headers: headers(),
-      body: JSON.stringify({ cliente, email, dias, observacao: obs })
+      body: JSON.stringify({ cliente, email, cnpj, dias, observacao: obs })
     });
     const data = await r.json();
     if (!r.ok) return alert('Erro: ' + data.error);
@@ -340,6 +343,7 @@
 
     document.getElementById('fCliente').value = '';
     document.getElementById('fEmail').value = '';
+    document.getElementById('fCnpj').value = '';
     document.getElementById('fDias').value = '30';
     document.getElementById('fObs').value = '';
     carregarLicencas();
@@ -383,7 +387,7 @@
     carregarLicencas();
   }
   async function desvincular(id) {
-    if (!confirm('Desvincular máquina? A licença poderá ser usada em outro computador.')) return;
+    if (!confirm('Desvincular CNPJ? A licença poderá ser vinculada a outro CNPJ na próxima ativação.')) return;
     await fetch(`/api/licenca/desvincular/${id}`, { method: 'PUT', headers: headers() });
     carregarLicencas();
   }
