@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AutoCenter — Licenças</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',sans-serif;background:#0f1117;color:#e2e8f0;min-height:100vh}
+  :root{--accent:#cc2229;--surface:#1a1d27;--surface2:#22263a;--border:#2d3148;--muted:#6b7280;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444}
+
+  /* LOGIN */
+  #login{display:flex;align-items:center;justify-content:center;min-height:100vh}
+  .login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px;width:360px;text-align:center}
+  .login-box img{width:120px;margin-bottom:20px}
+  .login-box h2{font-size:18px;font-weight:700;margin-bottom:4px}
+  .login-box p{font-size:12px;color:var(--muted);margin-bottom:24px}
+  .login-box input{width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:#e2e8f0;font-size:14px;margin-bottom:12px;outline:none}
+  .login-box input:focus{border-color:var(--accent)}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{background:#a81c22}
+  .btn-success{background:#15803d;color:#fff}
+  .btn-success:hover{background:#166534}
+  .btn-ghost{background:var(--surface2);color:#e2e8f0;border:1px solid var(--border)}
+  .btn-ghost:hover{background:var(--border)}
+  .btn-danger{background:#7f1d1d;color:#fca5a5}
+  .btn-danger:hover{background:#991b1b}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .err{color:var(--red);font-size:12px;margin-top:8px}
+
+  /* APP */
+  #app{display:none;flex-direction:column;min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px}
+  header h1{font-size:15px;font-weight:700;color:#fff}
+  header span{font-size:11px;color:var(--muted)}
+  main{flex:1;padding:24px;max-width:1100px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+
+  /* STATS */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px}
+  .stat .label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+  .stat .val{font-size:26px;font-weight:700}
+  .val-green{color:var(--green)}.val-yellow{color:var(--yellow)}.val-red{color:var(--red)}.val-blue{color:#60a5fa}
+
+  /* NOVA LICENÇA */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+  .card h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;color:var(--muted)}
+  .form-row{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:12px}
+  .form-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+  label{display:block;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  input,select,textarea{width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:#e2e8f0;font-size:13px;outline:none;font-family:inherit}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+  textarea{resize:none;height:60px}
+
+  /* CHAVE GERADA */
+  .chave-box{background:#0d1f12;border:1px solid #166534;border-radius:10px;padding:16px 20px;margin-top:16px;display:none}
+  .chave-box .chave{font-family:monospace;font-size:22px;font-weight:700;color:var(--green);letter-spacing:.1em;margin:8px 0}
+  .chave-box p{font-size:12px;color:var(--muted)}
+  .copy-btn{font-size:11px;padding:4px 10px;margin-top:8px}
+
+  /* TABELA */
+  .table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{background:var(--surface2);padding:10px 14px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
+  td{padding:10px 14px;border-top:1px solid var(--border);vertical-align:middle;white-space:nowrap}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase}
+  .badge-green{background:#14532d;color:#4ade80}
+  .badge-yellow{background:#422006;color:#fbbf24}
+  .badge-red{background:#450a0a;color:#fca5a5}
+  .badge-gray{background:#1f2937;color:#9ca3af}
+  .actions{display:flex;gap:6px;flex-wrap:wrap}
+  .btn-sm{padding:4px 10px;font-size:11px}
+
+  /* SEARCH */
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:0}
+  .search-input{padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:#e2e8f0;font-size:13px;outline:none;width:240px}
+  .search-input:focus{border-color:var(--accent)}
+  select.filter{padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:#e2e8f0;font-size:12px;outline:none}
+
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:100;display:none}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;width:420px;max-width:90vw}
+  .modal h3{font-size:15px;font-weight:700;margin-bottom:16px}
+
+  @media(max-width:700px){
+    .stats{grid-template-columns:1fr 1fr}
+    .form-row{grid-template-columns:1fr}
+    .form-row2{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-box">
+    <h2>AutoCenter</h2>
+    <p>Painel de Licenças — Maxdata</p>
+    <input type="password" id="pwd" placeholder="Senha de acesso" onkeydown="if(event.key==='Enter')doLogin()" />
+    <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Entrar</button>
+    <p class="err" id="loginErr"></p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <h1>AutoCenter — Gerenciamento de Licenças</h1>
+    <div style="display:flex;align-items:center;gap:16px">
+      <span id="headerInfo"></span>
+      <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="logout()">Sair</button>
+    </div>
+  </header>
+  <main>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat"><div class="label">Total de Licenças</div><div class="val val-blue" id="sTotal">—</div></div>
+      <div class="stat"><div class="label">Ativas</div><div class="val val-green" id="sAtivas">—</div></div>
+      <div class="stat"><div class="label">Vencidas</div><div class="val val-yellow" id="sVencidas">—</div></div>
+      <div class="stat"><div class="label">Revogadas</div><div class="val val-red" id="sRevogadas">—</div></div>
+    </div>
+
+    <!-- NOVA LICENÇA -->
+    <div class="card">
+      <h2>Nova Licença</h2>
+      <div class="form-row">
+        <div><label>Nome do Cliente</label><input id="fCliente" type="text" placeholder="Ex: MTK Distribuidora" /></div>
+        <div><label>E-mail (opcional)</label><input id="fEmail" type="email" placeholder="cliente@email.com" /></div>
+        <div><label>Dias de Acesso</label><input id="fDias" type="number" value="30" min="1" /></div>
+      </div>
+      <div class="form-row2">
+        <div><label>Observação (opcional)</label><textarea id="fObs" placeholder="Plano contratado, notas..."></textarea></div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn btn-success" onclick="criarLicenca()" style="width:100%;justify-content:center">
+            ＋ Gerar Licença
+          </button>
+        </div>
+      </div>
+      <div class="chave-box" id="chaveBox">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--green)">Licença Gerada com Sucesso</div>
+        <div class="chave" id="chaveGerada"></div>
+        <p id="chaveInfo"></p>
+        <button class="btn btn-ghost copy-btn" onclick="copiarChave()">Copiar Chave</button>
+      </div>
+    </div>
+
+    <!-- LISTA -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap">
+        <h2 style="margin:0">Licenças Cadastradas</h2>
+        <div class="toolbar">
+          <input class="search-input" type="text" placeholder="Buscar cliente..." oninput="filtrarTabela()" id="busca" />
+          <select class="filter" id="filtroStatus" onchange="filtrarTabela()">
+            <option value="">Todos</option>
+            <option value="ativa">Ativas</option>
+            <option value="vencida">Vencidas</option>
+            <option value="revogada">Revogadas</option>
+          </select>
+          <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="carregarLicencas()">↻ Atualizar</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Chave</th>
+              <th>Cliente</th>
+              <th>Status</th>
+              <th>Criado em</th>
+              <th>Expira em</th>
+              <th>Dias Rest.</th>
+              <th>Último Acesso</th>
+              <th>Máquina</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyLicencas"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL RENOVAR -->
+<div class="modal-bg" id="modalRenovar">
+  <div class="modal">
+    <h3>Renovar Licença</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px" id="modalClienteNome"></p>
+    <div style="margin-bottom:16px"><label>Adicionar quantos dias?</label><input id="mDias" type="number" value="30" min="1" /></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-success" onclick="confirmarRenovar()">Renovar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let adminPassword = '';
+  let licencas = [];
+  let renovarId = null;
+
+  // ── Login ──────────────────────────────────────────────────────────────────
+  async function doLogin() {
+    const pwd = document.getElementById('pwd').value;
+    const r = await fetch('/api/admin/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pwd })
+    });
+    if (r.ok) {
+      adminPassword = pwd;
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      carregarLicencas();
+    } else {
+      document.getElementById('loginErr').textContent = 'Senha incorreta.';
+    }
+  }
+
+  function logout() {
+    adminPassword = '';
+    document.getElementById('login').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('pwd').value = '';
+  }
+
+  function headers() {
+    return { 'Content-Type': 'application/json', 'x-admin-password': adminPassword };
+  }
+
+  // ── Carregar licenças ──────────────────────────────────────────────────────
+  async function carregarLicencas() {
+    const r = await fetch('/api/licenca/listar', { headers: headers() });
+    licencas = await r.json();
+    atualizarStats();
+    renderTabela(licencas);
+  }
+
+  function statusLicenca(lic) {
+    if (!lic.ativo) return 'revogada';
+    if (new Date(lic.expira_em) < new Date()) return 'vencida';
+    return 'ativa';
+  }
+
+  function diasRestantes(expira_em) {
+    return Math.max(0, Math.ceil((new Date(expira_em) - new Date()) / 86400000));
+  }
+
+  function atualizarStats() {
+    const total    = licencas.length;
+    const ativas   = licencas.filter(l => statusLicenca(l) === 'ativa').length;
+    const vencidas = licencas.filter(l => statusLicenca(l) === 'vencida').length;
+    const revog    = licencas.filter(l => statusLicenca(l) === 'revogada').length;
+    document.getElementById('sTotal').textContent    = total;
+    document.getElementById('sAtivas').textContent   = ativas;
+    document.getElementById('sVencidas').textContent = vencidas;
+    document.getElementById('sRevogadas').textContent = revog;
+  }
+
+  function filtrarTabela() {
+    const busca  = document.getElementById('busca').value.toLowerCase();
+    const status = document.getElementById('filtroStatus').value;
+    const filtradas = licencas.filter(l => {
+      const matchBusca  = !busca || l.cliente.toLowerCase().includes(busca) || l.chave.toLowerCase().includes(busca);
+      const matchStatus = !status || statusLicenca(l) === status;
+      return matchBusca && matchStatus;
+    });
+    renderTabela(filtradas);
+  }
+
+  function fmtDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+  }
+
+  function renderTabela(rows) {
+    const tbody = document.getElementById('tbodyLicencas');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--muted)">Nenhuma licença encontrada</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(l => {
+      const st = statusLicenca(l);
+      const badge = st === 'ativa'
+        ? '<span class="badge badge-green">Ativa</span>'
+        : st === 'vencida'
+        ? '<span class="badge badge-yellow">Vencida</span>'
+        : '<span class="badge badge-red">Revogada</span>';
+      const dias = st === 'ativa' ? diasRestantes(l.expira_em) : '—';
+      const diasColor = typeof dias === 'number' && dias <= 5 ? 'color:var(--red);font-weight:700' : '';
+
+      const acoes = `
+        <div class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="abrirRenovar(${l.id},'${l.cliente.replace(/'/g,"\\'")}')">Renovar</button>
+          ${st !== 'revogada'
+            ? `<button class="btn btn-danger btn-sm" onclick="revogar(${l.id})">Revogar</button>`
+            : `<button class="btn btn-ghost btn-sm" onclick="reativar(${l.id})">Reativar</button>`}
+          ${l.machine_id ? `<button class="btn btn-ghost btn-sm" onclick="desvincular(${l.id})" title="Desvincular máquina">🖥 Desvinc.</button>` : ''}
+        </div>`;
+
+      return `<tr>
+        <td style="color:var(--muted)">${l.id}</td>
+        <td><span style="font-family:monospace;font-size:11px;background:var(--surface2);padding:3px 8px;border-radius:6px">${l.chave}</span></td>
+        <td><div style="font-weight:600">${l.cliente}</div>${l.email ? `<div style="color:var(--muted);font-size:10px">${l.email}</div>` : ''}</td>
+        <td>${badge}</td>
+        <td>${fmtDate(l.criado_em)}</td>
+        <td>${fmtDate(l.expira_em)}</td>
+        <td style="${diasColor}">${dias}${typeof dias === 'number' ? ' dias' : ''}</td>
+        <td>${fmtDate(l.ultimo_acesso)}</td>
+        <td style="font-size:10px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis">${l.machine_id ? '✓ Vinculada' : '—'}</td>
+        <td>${acoes}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── Criar licença ──────────────────────────────────────────────────────────
+  async function criarLicenca() {
+    const cliente = document.getElementById('fCliente').value.trim();
+    const email   = document.getElementById('fEmail').value.trim();
+    const dias    = Number(document.getElementById('fDias').value);
+    const obs     = document.getElementById('fObs').value.trim();
+    if (!cliente) return alert('Informe o nome do cliente.');
+    if (!dias || dias < 1) return alert('Informe um número de dias válido.');
+
+    const r = await fetch('/api/licenca/criar', {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({ cliente, email, dias, observacao: obs })
+    });
+    const data = await r.json();
+    if (!r.ok) return alert('Erro: ' + data.error);
+
+    const box = document.getElementById('chaveBox');
+    document.getElementById('chaveGerada').textContent = data.chave;
+    document.getElementById('chaveInfo').textContent =
+      `Cliente: ${cliente}  ·  Válida por ${dias} dias  ·  Expira em ${new Date(data.expiraEm).toLocaleDateString('pt-BR')}`;
+    box.style.display = 'block';
+
+    document.getElementById('fCliente').value = '';
+    document.getElementById('fEmail').value = '';
+    document.getElementById('fDias').value = '30';
+    document.getElementById('fObs').value = '';
+    carregarLicencas();
+  }
+
+  function copiarChave() {
+    const chave = document.getElementById('chaveGerada').textContent;
+    navigator.clipboard.writeText(chave);
+    alert('Chave copiada!');
+  }
+
+  // ── Renovar ────────────────────────────────────────────────────────────────
+  function abrirRenovar(id, nome) {
+    renovarId = id;
+    document.getElementById('modalClienteNome').textContent = `Cliente: ${nome}`;
+    document.getElementById('mDias').value = 30;
+    document.getElementById('modalRenovar').style.display = 'flex';
+  }
+  function fecharModal() {
+    document.getElementById('modalRenovar').style.display = 'none';
+  }
+  async function confirmarRenovar() {
+    const dias = Number(document.getElementById('mDias').value);
+    if (!dias || dias < 1) return alert('Informe um número de dias válido.');
+    await fetch('/api/licenca/renovar', {
+      method: 'PUT', headers: headers(),
+      body: JSON.stringify({ id: renovarId, dias })
+    });
+    fecharModal();
+    carregarLicencas();
+  }
+
+  // ── Revogar / Reativar / Desvincular ──────────────────────────────────────
+  async function revogar(id) {
+    if (!confirm('Revogar esta licença? O cliente perderá o acesso imediatamente.')) return;
+    await fetch(`/api/licenca/revogar/${id}`, { method: 'DELETE', headers: headers() });
+    carregarLicencas();
+  }
+  async function reativar(id) {
+    await fetch(`/api/licenca/reativar/${id}`, { method: 'PUT', headers: headers() });
+    carregarLicencas();
+  }
+  async function desvincular(id) {
+    if (!confirm('Desvincular máquina? A licença poderá ser usada em outro computador.')) return;
+    await fetch(`/api/licenca/desvincular/${id}`, { method: 'PUT', headers: headers() });
+    carregarLicencas();
+  }
+</script>
+</body>
+</html>
