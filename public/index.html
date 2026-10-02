@@ -621,7 +621,7 @@
     const email   = document.getElementById('fEmail').value.trim();
     const cnpj    = document.getElementById('fCnpj').value.trim();
     const dias    = Number(document.getElementById('fDias').value);
-    const obs     = document.getElementById('fObs').value.trim();
+    const obs     = '';
     const isentoEl = document.getElementById('fIsento');
     const valorEl  = document.getElementById('fValor');
     const isento   = isentoEl ? isentoEl.checked : false;
@@ -648,7 +648,6 @@
     document.getElementById('fEmail').value = '';
     document.getElementById('fCnpj').value = '';
     document.getElementById('fDias').value = '30';
-    document.getElementById('fObs').value = '';
     document.getElementById('fValor').value = '';
     document.getElementById('fIsento').checked = false;
     document.getElementById('fValor').disabled = false;
