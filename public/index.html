@@ -616,14 +616,17 @@
 
   // ── Criar licença ──────────────────────────────────────────────────────────
   async function criarLicenca() {
+    try {
     const cliente = document.getElementById('fCliente').value.trim();
     const email   = document.getElementById('fEmail').value.trim();
     const cnpj    = document.getElementById('fCnpj').value.trim();
     const dias    = Number(document.getElementById('fDias').value);
     const obs     = document.getElementById('fObs').value.trim();
-    const isento  = document.getElementById('fIsento').checked;
-    const valorRaw = document.getElementById('fValor').value;
-    const valor   = isento ? null : (valorRaw !== '' ? Number(valorRaw) : null);
+    const isentoEl = document.getElementById('fIsento');
+    const valorEl  = document.getElementById('fValor');
+    const isento   = isentoEl ? isentoEl.checked : false;
+    const valorRaw = valorEl ? valorEl.value : '';
+    const valor    = isento ? null : (valorRaw !== '' && !isNaN(Number(valorRaw)) ? Number(valorRaw) : null);
     if (!cliente) return alert('Informe o nome do cliente.');
     if (!dias || dias < 1) return alert('Informe um número de dias válido.');
 
@@ -631,8 +634,9 @@
       method: 'POST', headers: headers(),
       body: JSON.stringify({ cliente, email, cnpj, dias, observacao: obs, valor })
     });
-    const data = await r.json();
-    if (!r.ok) return alert('Erro: ' + data.error);
+    let data = {};
+    try { data = await r.json(); } catch { data = {}; }
+    if (!r.ok) return alert('Erro ao criar licença: ' + (data.error || r.status));
 
     const box = document.getElementById('chaveBox');
     document.getElementById('chaveGerada').textContent = data.chave;
@@ -650,6 +654,7 @@
     document.getElementById('fValor').disabled = false;
     document.getElementById('fClienteSel').value = '';
     carregarLicencas();
+    } catch(e) { alert('Erro inesperado: ' + e.message); }
   }
 
   function copiarChave() {
