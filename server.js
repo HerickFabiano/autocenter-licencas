@@ -98,6 +98,21 @@ app.get('/api/licenca/listar', adminAuth, async (req, res) => {
   }
 });
 
+// ── Alterar data de vencimento ────────────────────────────────────────────────
+app.put('/api/licenca/alterar-data', adminAuth, async (req, res) => {
+  try {
+    const { id, dataExpiracao } = req.body;
+    if (!id || !dataExpiracao) return res.status(400).json({ error: 'id e dataExpiracao são obrigatórios' });
+    const r = await pool.query(
+      'UPDATE licencas SET expira_em = $1, ativo = TRUE WHERE id = $2 RETURNING *',
+      [new Date(dataExpiracao), id]
+    );
+    res.json(r.rows[0]);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── Renovar licença ───────────────────────────────────────────────────────────
 app.put('/api/licenca/renovar', adminAuth, async (req, res) => {
   try {

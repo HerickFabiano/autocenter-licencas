@@ -68,6 +68,9 @@
   td.col-cliente{text-align:left}
   .col-id{width:36px}.col-chave{width:150px}.col-cliente{width:auto}.col-status{width:110px}.col-datas{width:130px}.col-cnpj{width:155px}.col-acoes{width:200px}
   .sub{font-size:10px;color:var(--muted);margin-top:2px}
+  .data-editavel{cursor:pointer;display:inline-block;padding:2px 6px;border-radius:4px;transition:.15s}
+  .data-editavel:hover{background:var(--surface2);color:#fff}
+  .data-input{padding:3px 6px;border-radius:6px;border:1px solid var(--accent);background:var(--surface2);color:#e2e8f0;font-size:11px;outline:none;width:130px}
   tr:hover td{background:rgba(255,255,255,.02)}
   .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase}
   .badge-green{background:#14532d;color:#4ade80}
@@ -332,7 +335,9 @@
         </td>
         <td>
           <div style="font-size:11px">📅 ${fmtDate(l.criado_em)}</div>
-          <div class="sub">⏳ ${fmtDate(l.expira_em)}</div>
+          <div class="sub" id="dataCell_${l.id}">
+            ⏳ <span class="data-editavel" onclick="editarData(${l.id})" title="Clique para alterar a data">${fmtDate(l.expira_em)}</span>
+          </div>
         </td>
         <td>
           <div style="font-size:11px">${cnpjFmt}</div>
@@ -398,6 +403,29 @@
       body: JSON.stringify({ id: renovarId, dias })
     });
     fecharModal();
+    carregarLicencas();
+  }
+
+  // ── Alterar data de vencimento ────────────────────────────────────────────
+  function editarData(id) {
+    const lic = licencas.find(l => l.id === id);
+    if (!lic) return;
+    const cell = document.getElementById('dataCell_' + id);
+    const dataAtual = lic.expira_em ? new Date(lic.expira_em).toISOString().slice(0,10) : '';
+    cell.innerHTML = `⏳ <input class="data-input" type="date" id="dataInput_${id}" value="${dataAtual}" />
+      <button class="btn btn-success btn-sm" style="margin-left:4px;padding:3px 8px" onclick="salvarData(${id})">✓</button>
+      <button class="btn btn-ghost btn-sm" style="padding:3px 8px" onclick="carregarLicencas()">✕</button>`;
+    document.getElementById('dataInput_' + id).focus();
+  }
+
+  async function salvarData(id) {
+    const input = document.getElementById('dataInput_' + id);
+    if (!input || !input.value) return alert('Selecione uma data válida.');
+    const r = await fetch('/api/licenca/alterar-data', {
+      method: 'PUT', headers: headers(),
+      body: JSON.stringify({ id, dataExpiracao: input.value })
+    });
+    if (!r.ok) { const d = await r.json(); return alert('Erro: ' + d.error); }
     carregarLicencas();
   }
 
