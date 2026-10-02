@@ -75,6 +75,8 @@ app.post('/api/licenca/criar', adminAuth, async (req, res) => {
 
     const chave    = gerarChave();
     const expiraEm = new Date(Date.now() + Number(dias) * 86400000);
+    // ajusta para meio-dia UTC para evitar problemas de fuso horário na exibição
+    expiraEm.setUTCHours(12, 0, 0, 0);
     const cnpjNorm = normalizeCnpj(cnpj) || null;
 
     await pool.query(
@@ -105,7 +107,7 @@ app.put('/api/licenca/alterar-data', adminAuth, async (req, res) => {
     if (!id || !dataExpiracao) return res.status(400).json({ error: 'id e dataExpiracao são obrigatórios' });
     const r = await pool.query(
       'UPDATE licencas SET expira_em = $1, ativo = TRUE WHERE id = $2 RETURNING *',
-      [new Date(dataExpiracao), id]
+      [new Date(dataExpiracao + 'T12:00:00.000Z'), id]
     );
     res.json(r.rows[0]);
   } catch (e) {
