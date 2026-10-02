@@ -61,9 +61,10 @@
 
   /* TABELA */
   .table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
-  table{width:100%;border-collapse:collapse;font-size:12px}
+  table{width:100%;min-width:980px;border-collapse:collapse;font-size:12px}
   th{background:var(--surface2);padding:10px 14px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
   td{padding:10px 14px;border-top:1px solid var(--border);vertical-align:middle;white-space:nowrap}
+  .col-id{width:40px}.col-chave{width:160px}.col-status{width:80px}.col-data{width:100px}.col-dias{width:80px}.col-acesso{width:110px}.col-cnpj{width:150px}.col-acoes{width:180px}
   tr:hover td{background:rgba(255,255,255,.02)}
   .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase}
   .badge-green{background:#14532d;color:#4ade80}
@@ -185,16 +186,16 @@
         <table>
           <thead>
             <tr>
-              <th>#</th>
-              <th>Chave</th>
+              <th class="col-id">#</th>
+              <th class="col-chave">Chave</th>
               <th>Cliente</th>
-              <th>Status</th>
-              <th>Criado em</th>
-              <th>Expira em</th>
-              <th>Dias Rest.</th>
-              <th>Último Acesso</th>
-              <th>CNPJ</th>
-              <th>Ações</th>
+              <th class="col-status">Status</th>
+              <th class="col-data">Criado em</th>
+              <th class="col-data">Expira em</th>
+              <th class="col-dias">Dias Rest.</th>
+              <th class="col-acesso">Último Acesso</th>
+              <th class="col-cnpj">CNPJ</th>
+              <th class="col-acoes">Ações</th>
             </tr>
           </thead>
           <tbody id="tbodyLicencas"></tbody>
