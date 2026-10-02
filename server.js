@@ -220,6 +220,28 @@ app.put('/api/licenca/desvincular/:id', adminAuth, async (req, res) => {
   }
 });
 
+// ── Validar licença por CNPJ (setup inicial via engrenagem) ──────────────────
+app.post('/api/licenca/validar-cnpj', async (req, res) => {
+  try {
+    const { cnpj } = req.body;
+    const cnpjNorm = normalizeCnpj(cnpj);
+    if (!cnpjNorm) return res.json({ valido: false, motivo: 'CNPJ não informado' });
+    const r = await pool.query(
+      'SELECT * FROM licencas WHERE cnpj = $1 AND ativo = TRUE ORDER BY expira_em DESC LIMIT 1',
+      [cnpjNorm]
+    );
+    if (!r.rows.length) return res.json({ valido: false, motivo: 'Nenhuma licença ativa para este CNPJ' });
+    const lic = r.rows[0];
+    if (new Date(lic.expira_em) < new Date())
+      return res.json({ valido: false, motivo: 'Licença vencida' });
+    await pool.query('UPDATE licencas SET ultimo_acesso = NOW() WHERE id = $1', [lic.id]);
+    const diasRestantes = Math.max(0, Math.ceil((new Date(lic.expira_em) - new Date()) / 86400000));
+    res.json({ valido: true, chave: lic.chave, cliente: lic.cliente, expiraEm: lic.expira_em, diasRestantes });
+  } catch (e) {
+    res.status(500).json({ valido: false, motivo: 'Erro interno', erro: e.message });
+  }
+});
+
 // ── Verificar senha admin ─────────────────────────────────────────────────────
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;
