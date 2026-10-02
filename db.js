@@ -30,14 +30,9 @@ async function initDb() {
       observacao    TEXT
     )
   `);
-  // Migração: adiciona coluna cnpj se não existir (backward compat)
-  await pool.query(`
-    ALTER TABLE licencas ADD COLUMN IF NOT EXISTS cnpj VARCHAR(20)
-  `).catch(() => {});
-  // Remove coluna machine_id se ainda existir
-  await pool.query(`
-    ALTER TABLE licencas DROP COLUMN IF EXISTS machine_id
-  `).catch(() => {});
+  await pool.query(`ALTER TABLE licencas ADD COLUMN IF NOT EXISTS cnpj VARCHAR(20)`).catch(() => {});
+  await pool.query(`ALTER TABLE licencas DROP COLUMN IF EXISTS machine_id`).catch(() => {});
+  await pool.query(`ALTER TABLE licencas ADD COLUMN IF NOT EXISTS valor NUMERIC(10,2)`).catch(() => {});
 }
 
 module.exports = { pool, initDb };

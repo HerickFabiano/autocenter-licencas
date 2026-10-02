@@ -177,7 +177,15 @@
       </div>
       <div class="form-row">
         <div><label>CNPJ (opcional — vincula na 1ª ativação se não informado)</label><input id="fCnpj" type="text" placeholder="00.000.000/0000-00" /></div>
-        <div><label>Observação (opcional)</label><input id="fObs" type="text" placeholder="Plano contratado, notas..." /></div>
+        <div>
+          <label>Valor do Pagamento</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input id="fValor" type="number" step="0.01" min="0" placeholder="0,00" style="flex:1" />
+            <label style="display:flex;align-items:center;gap:4px;text-transform:none;font-size:12px;cursor:pointer;white-space:nowrap">
+              <input type="checkbox" id="fIsento" onchange="toggleIsento()" style="width:auto" /> ISENTO
+            </label>
+          </div>
+        </div>
         <div style="display:flex;align-items:flex-end">
           <button class="btn btn-success" onclick="criarLicenca()" style="width:100%;justify-content:center">
             ＋ Gerar Licença
@@ -271,6 +279,31 @@
   </main>
 </div>
 
+<!-- MODAL HISTÓRICO DO CLIENTE -->
+<div class="modal-bg" id="modalHistorico">
+  <div class="modal" style="width:600px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 style="margin:0" id="modalHistoricoTitulo">Histórico de Licenças</h3>
+      <button class="btn btn-ghost btn-sm" onclick="fecharModalHistorico()">✕ Fechar</button>
+    </div>
+    <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border)">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr>
+            <th style="background:var(--surface2);padding:8px 12px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Chave</th>
+            <th style="background:var(--surface2);padding:8px 12px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Valor</th>
+            <th style="background:var(--surface2);padding:8px 12px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Status</th>
+            <th style="background:var(--surface2);padding:8px 12px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Gerado em</th>
+            <th style="background:var(--surface2);padding:8px 12px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Expira em</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyHistorico"></tbody>
+      </table>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:12px;text-align:center" id="historicoVazio" style="display:none"></p>
+  </div>
+</div>
+
 <!-- MODAL RENOVAR -->
 <div class="modal-bg" id="modalRenovar">
   <div class="modal">
@@ -345,13 +378,13 @@
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">Nenhum cliente cadastrado</td></tr>';
       return;
     }
-    tbody.innerHTML = rows.map(c => `<tr>
+    tbody.innerHTML = rows.map(c => `<tr style="cursor:pointer" onclick="verHistorico(${c.id},'${c.nome.replace(/'/g,"\\'")}')">
       <td style="text-align:center;color:var(--muted)">${c.id}</td>
       <td style="font-weight:600">${c.nome}</td>
       <td style="text-align:center;font-family:monospace;font-size:11px">${fmtCnpjExibir(c.cnpj)}</td>
       <td style="text-align:center">${c.celular||'—'}</td>
       <td style="text-align:center;font-size:11px">${c.email||'—'}</td>
-      <td style="text-align:center">
+      <td style="text-align:center" onclick="event.stopPropagation()">
         <div class="actions" style="justify-content:center">
           <button class="btn btn-ghost btn-sm" onclick="editarCliente(${c.id})">✏️ Editar</button>
           <button class="btn btn-danger btn-sm" onclick="excluirCliente(${c.id})">Excluir</button>
@@ -404,6 +437,50 @@
     document.getElementById('clienteFormTitulo').textContent = 'Novo Cliente';
     document.getElementById('btnSalvarCliente').textContent  = '＋ Cadastrar';
     document.getElementById('btnCancelarCliente').style.display = 'none';
+  }
+
+  // ── Histórico do cliente ───────────────────────────────────────────────────
+  async function verHistorico(id, nome) {
+    document.getElementById('modalHistoricoTitulo').textContent = `Histórico — ${nome}`;
+    document.getElementById('modalHistorico').style.display = 'flex';
+    document.getElementById('tbodyHistorico').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Carregando…</td></tr>';
+    const r = await fetch(`/api/clientes/${id}/historico`, { headers: headers() });
+    const rows = await r.json();
+    if (!rows.length) {
+      document.getElementById('tbodyHistorico').innerHTML =
+        '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Nenhuma licença gerada para este cliente</td></tr>';
+      return;
+    }
+    document.getElementById('tbodyHistorico').innerHTML = rows.map(l => {
+      const st = !l.ativo ? '<span class="badge badge-red">Revogada</span>'
+        : new Date(l.expira_em) < new Date() ? '<span class="badge badge-yellow">Vencida</span>'
+        : '<span class="badge badge-green">Ativa</span>';
+      const valorStr = l.valor !== null && l.valor !== undefined
+        ? 'R$ ' + Number(l.valor).toFixed(2).replace('.',',')
+        : '<span style="color:#22c55e;font-weight:700">ISENTO</span>';
+      const dtGerado = new Date(l.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      const dtExpira = new Date(l.expira_em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+      return `<tr>
+        <td style="padding:8px 12px;border-top:1px solid var(--border)">
+          <span style="font-family:monospace;font-size:11px;background:var(--surface2);padding:2px 7px;border-radius:5px">${l.chave}</span>
+        </td>
+        <td style="padding:8px 12px;border-top:1px solid var(--border);text-align:center">${valorStr}</td>
+        <td style="padding:8px 12px;border-top:1px solid var(--border);text-align:center">${st}</td>
+        <td style="padding:8px 12px;border-top:1px solid var(--border);text-align:center;font-size:11px">${dtGerado}</td>
+        <td style="padding:8px 12px;border-top:1px solid var(--border);text-align:center;font-size:11px">${dtExpira}</td>
+      </tr>`;
+    }).join('');
+  }
+  function fecharModalHistorico() {
+    document.getElementById('modalHistorico').style.display = 'none';
+  }
+
+  // ── ISENTO ────────────────────────────────────────────────────────────────
+  function toggleIsento() {
+    const isento = document.getElementById('fIsento').checked;
+    const input  = document.getElementById('fValor');
+    input.disabled = isento;
+    input.value    = isento ? '' : input.value;
   }
 
   async function excluirCliente(id) {
@@ -544,12 +621,15 @@
     const cnpj    = document.getElementById('fCnpj').value.trim();
     const dias    = Number(document.getElementById('fDias').value);
     const obs     = document.getElementById('fObs').value.trim();
+    const isento  = document.getElementById('fIsento').checked;
+    const valorRaw = document.getElementById('fValor').value;
+    const valor   = isento ? null : (valorRaw !== '' ? Number(valorRaw) : null);
     if (!cliente) return alert('Informe o nome do cliente.');
     if (!dias || dias < 1) return alert('Informe um número de dias válido.');
 
     const r = await fetch('/api/licenca/criar', {
       method: 'POST', headers: headers(),
-      body: JSON.stringify({ cliente, email, cnpj, dias, observacao: obs })
+      body: JSON.stringify({ cliente, email, cnpj, dias, observacao: obs, valor })
     });
     const data = await r.json();
     if (!r.ok) return alert('Erro: ' + data.error);
@@ -565,6 +645,10 @@
     document.getElementById('fCnpj').value = '';
     document.getElementById('fDias').value = '30';
     document.getElementById('fObs').value = '';
+    document.getElementById('fValor').value = '';
+    document.getElementById('fIsento').checked = false;
+    document.getElementById('fValor').disabled = false;
+    document.getElementById('fClienteSel').value = '';
     carregarLicencas();
   }
 

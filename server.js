@@ -65,6 +65,18 @@ app.put('/api/clientes/:id', adminAuth, async (req, res) => {
   }
 });
 
+app.get('/api/clientes/:id/historico', adminAuth, async (req, res) => {
+  try {
+    const cli = await pool.query('SELECT cnpj FROM clientes WHERE id=$1', [req.params.id]);
+    if (!cli.rows.length) return res.status(404).json({ error: 'Cliente não encontrado' });
+    const r = await pool.query(
+      'SELECT id, chave, valor, criado_em, expira_em, ativo FROM licencas WHERE cnpj=$1 ORDER BY criado_em DESC',
+      [cli.rows[0].cnpj]
+    );
+    res.json(r.rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.delete('/api/clientes/:id', adminAuth, async (req, res) => {
   try {
     await pool.query('DELETE FROM clientes WHERE id=$1', [req.params.id]);
@@ -116,18 +128,18 @@ app.post('/api/licenca/validar', async (req, res) => {
 // ── Criar licença ─────────────────────────────────────────────────────────────
 app.post('/api/licenca/criar', adminAuth, async (req, res) => {
   try {
-    const { cliente, email, cnpj, dias, observacao } = req.body;
+    const { cliente, email, cnpj, dias, observacao, valor } = req.body;
     if (!cliente || !dias) return res.status(400).json({ error: 'cliente e dias são obrigatórios' });
 
     const chave    = gerarChave();
     const expiraEm = new Date(Date.now() + Number(dias) * 86400000);
-    // ajusta para meio-dia UTC para evitar problemas de fuso horário na exibição
     expiraEm.setUTCHours(12, 0, 0, 0);
-    const cnpjNorm = normalizeCnpj(cnpj) || null;
+    const cnpjNorm  = normalizeCnpj(cnpj) || null;
+    const valorNum  = valor !== undefined && valor !== '' && valor !== null ? Number(valor) : null;
 
     await pool.query(
-      'INSERT INTO licencas (chave, cliente, email, cnpj, expira_em, observacao) VALUES ($1,$2,$3,$4,$5,$6)',
-      [chave, cliente.trim(), email?.trim() || null, cnpjNorm, expiraEm, observacao?.trim() || null]
+      'INSERT INTO licencas (chave, cliente, email, cnpj, expira_em, observacao, valor) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+      [chave, cliente.trim(), email?.trim() || null, cnpjNorm, expiraEm, observacao?.trim() || null, valorNum]
     );
 
     res.json({ chave, expiraEm, diasRestantes: Number(dias) });
