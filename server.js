@@ -26,6 +26,52 @@ function normalizeCnpj(v) {
   return (v || '').replace(/\D/g, '');
 }
 
+// ── CRUD Clientes ─────────────────────────────────────────────────────────────
+app.get('/api/clientes', adminAuth, async (req, res) => {
+  try {
+    const r = await pool.query('SELECT * FROM clientes ORDER BY nome');
+    res.json(r.rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/clientes', adminAuth, async (req, res) => {
+  try {
+    const { nome, cnpj, celular, email } = req.body;
+    if (!nome || !cnpj) return res.status(400).json({ error: 'Nome e CNPJ são obrigatórios' });
+    const cnpjNorm = normalizeCnpj(cnpj);
+    const r = await pool.query(
+      'INSERT INTO clientes (nome, cnpj, celular, email) VALUES ($1,$2,$3,$4) RETURNING *',
+      [nome.trim(), cnpjNorm, celular?.trim() || null, email?.trim() || null]
+    );
+    res.json(r.rows[0]);
+  } catch (e) {
+    if (e.code === '23505') return res.status(400).json({ error: 'CNPJ já cadastrado' });
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.put('/api/clientes/:id', adminAuth, async (req, res) => {
+  try {
+    const { nome, cnpj, celular, email } = req.body;
+    const cnpjNorm = normalizeCnpj(cnpj);
+    const r = await pool.query(
+      'UPDATE clientes SET nome=$1, cnpj=$2, celular=$3, email=$4 WHERE id=$5 RETURNING *',
+      [nome.trim(), cnpjNorm, celular?.trim() || null, email?.trim() || null, req.params.id]
+    );
+    res.json(r.rows[0]);
+  } catch (e) {
+    if (e.code === '23505') return res.status(400).json({ error: 'CNPJ já cadastrado' });
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.delete('/api/clientes/:id', adminAuth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM clientes WHERE id=$1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── Validar licença (chamado pelo AutoCenter) ─────────────────────────────────
 app.post('/api/licenca/validar', async (req, res) => {
   try {

@@ -7,6 +7,16 @@ const pool = new Pool({
 
 async function initDb() {
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS clientes (
+      id        SERIAL PRIMARY KEY,
+      nome      VARCHAR(150) NOT NULL,
+      cnpj      VARCHAR(20)  UNIQUE NOT NULL,
+      celular   VARCHAR(20),
+      email     VARCHAR(150),
+      criado_em TIMESTAMPTZ  DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS licencas (
       id            SERIAL PRIMARY KEY,
       chave         VARCHAR(30)  UNIQUE NOT NULL,
