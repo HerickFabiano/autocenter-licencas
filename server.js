@@ -200,6 +200,23 @@ app.delete('/api/licenca/revogar/:id', adminAuth, async (req, res) => {
   }
 });
 
+// ── Deletar licença (permanente) ─────────────────────────────────────────────
+app.delete('/api/licenca/deletar/:id', adminAuth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM licencas WHERE id = $1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Limpar todos os registros (licencas + clientes) ───────────────────────────
+app.delete('/api/admin/limpar-tudo', adminAuth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM licencas');
+    await pool.query('DELETE FROM clientes');
+    res.json({ ok: true, mensagem: 'Todos os registros apagados' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── Reativar licença ──────────────────────────────────────────────────────────
 app.put('/api/licenca/reativar/:id', adminAuth, async (req, res) => {
   try {
