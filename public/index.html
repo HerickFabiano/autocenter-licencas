@@ -66,7 +66,7 @@
   th.col-cliente{text-align:left}
   td{padding:10px 12px;border-top:1px solid var(--border);vertical-align:middle;word-break:break-word;text-align:center}
   td.col-cliente{text-align:left}
-  .col-id{width:36px}.col-chave{width:150px}.col-cliente{width:auto}.col-status{width:110px}.col-datas{width:130px}.col-cnpj{width:155px}.col-acoes{width:200px}
+  .col-id{width:36px}.col-chave{width:150px}.col-cliente{width:auto}.col-status{width:110px}.col-datas{width:130px}.col-cnpj{width:155px}.col-acoes{width:230px}
   .sub{font-size:10px;color:var(--muted);margin-top:2px}
   .data-editavel{cursor:pointer;display:inline-block;padding:2px 6px;border-radius:4px;transition:.15s}
   .data-editavel:hover{background:var(--surface2);color:#fff}
@@ -301,6 +301,25 @@
       </table>
     </div>
     <p style="font-size:11px;color:var(--muted);margin-top:12px;text-align:center" id="historicoVazio" style="display:none"></p>
+  </div>
+</div>
+
+<!-- MODAL DELETAR -->
+<div class="modal-bg" id="modalDeletar">
+  <div class="modal">
+    <h3 style="color:var(--red)">⚠️ Excluir Licença</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:6px" id="modalDeletarInfo"></p>
+    <p style="font-size:12px;color:#fca5a5;margin-bottom:16px">Esta ação é permanente e não pode ser desfeita.</p>
+    <div style="margin-bottom:16px">
+      <label>Digite sua senha para confirmar</label>
+      <input type="password" id="deletarSenha" placeholder="Senha de acesso" style="margin-top:4px"
+        onkeydown="if(event.key==='Enter')confirmarDeletar()" />
+      <p class="err" id="deletarErr" style="margin-top:6px"></p>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="fecharModalDeletar()">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmarDeletar()" style="background:#dc2626;color:#fff">🗑️ Excluir Definitivamente</button>
+    </div>
   </div>
 </div>
 
@@ -589,6 +608,7 @@
             ? `<button class="btn btn-danger btn-sm" onclick="revogar(${l.id})">Revogar</button>`
             : `<button class="btn btn-ghost btn-sm" onclick="reativar(${l.id})">Reativar</button>`}
           ${l.cnpj ? `<button class="btn btn-ghost btn-sm" onclick="desvincular(${l.id})" title="Desvincular CNPJ">🔗 Desvinc.</button>` : ''}
+          <button class="btn btn-sm" onclick="abrirDeletar(${l.id},'${l.cliente.replace(/'/g,"\\'")}','${l.chave}')" title="Excluir permanentemente" style="background:#450a0a;color:#fca5a5;border:1px solid #7f1d1d">🗑️ Excluir</button>
         </div>`;
 
       return `<tr>
@@ -703,6 +723,30 @@
       body: JSON.stringify({ id, dataExpiracao: input.value })
     });
     if (!r.ok) { const d = await r.json(); return alert('Erro: ' + d.error); }
+    carregarLicencas();
+  }
+
+  // ── Deletar licença (permanente) ─────────────────────────────────────────
+  let deletarId = null;
+  function abrirDeletar(id, cliente, chave) {
+    deletarId = id;
+    document.getElementById('modalDeletarInfo').textContent = `Cliente: ${cliente}  ·  Chave: ${chave}`;
+    document.getElementById('deletarSenha').value = '';
+    document.getElementById('deletarErr').textContent = '';
+    document.getElementById('modalDeletar').style.display = 'flex';
+    setTimeout(() => document.getElementById('deletarSenha').focus(), 100);
+  }
+  function fecharModalDeletar() {
+    document.getElementById('modalDeletar').style.display = 'none';
+    deletarId = null;
+  }
+  async function confirmarDeletar() {
+    const pwd = document.getElementById('deletarSenha').value;
+    if (!pwd) { document.getElementById('deletarErr').textContent = 'Informe a senha.'; return; }
+    if (pwd !== adminPassword) { document.getElementById('deletarErr').textContent = 'Senha incorreta.'; return; }
+    const r = await fetch(`/api/licenca/deletar/${deletarId}`, { method: 'DELETE', headers: headers() });
+    if (!r.ok) { const d = await r.json(); document.getElementById('deletarErr').textContent = 'Erro: ' + d.error; return; }
+    fecharModalDeletar();
     carregarLicencas();
   }
 
